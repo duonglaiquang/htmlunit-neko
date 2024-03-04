@@ -254,6 +254,8 @@ public class HTMLTagBalancer
     private QName[] fragmentContextStack_ = null;
     private int fragmentContextStackSize_ = 0; // not 0 only when a fragment is parsed and fragmentContextStack_ is set
 
+    private ElementEntry startFormBeforeBody_;
+
     private final List<ElementEntry> endElementsBuffer_ = new ArrayList<>();
     private final List<String> discardedStartElements = new ArrayList<>();
 
@@ -340,6 +342,8 @@ public class HTMLTagBalancer
 
         endElementsBuffer_.clear();
         discardedStartElements.clear();
+
+        startFormBeforeBody_ = null;
     }
 
     /** Sets a feature. */
@@ -445,6 +449,8 @@ public class HTMLTagBalancer
     @Override
     public void endDocument(final Augmentations augs) throws XNIException {
 
+        consumeFormBeforeBody();
+
         // </body> and </html> have been buffered to consider outside content
         fIgnoreOutsideContent = true; // endElement should not ignore the elements passed from buffer
         consumeBufferedEndElements();
@@ -488,6 +494,20 @@ public class HTMLTagBalancer
             fDocumentHandler.endDocument(augs);
         }
 
+    }
+
+    /**
+     * Consume <form> that appear before <body>
+     */
+    private void consumeFormBeforeBody() {
+        final ElementEntry entry = startFormBeforeBody_;
+        if (entry == null) {
+            return;
+        }
+
+        startFormBeforeBody_ = null;
+        forcedStartElement_ = true;
+        startElement(entry.name_, entry.attrs_, entry.augs_);
     }
 
     /**
@@ -563,6 +583,17 @@ public class HTMLTagBalancer
         // the creation of some elements like TABLE or SELECT can't be forced. Any others?
         if (isForcedCreation && (elementCode == HTMLElements.TABLE || elementCode == HTMLElements.SELECT)) {
             return; // don't accept creation
+        }
+
+        if (startFormBeforeBody_ != null) {
+            // prioritize FRAMESET over FORM
+            if (elementCode == HTMLElements.FRAMESET) {
+                final ElementEntry entry = startFormBeforeBody_;
+                startFormBeforeBody_ = null;
+                notifyDiscardedStartElement(entry.name_, entry.attrs_, entry.augs_);
+            } else {
+                consumeFormBeforeBody();
+            }
         }
 
         // ignore multiple html, head, body elements
@@ -641,6 +672,10 @@ public class HTMLTagBalancer
         else if (elementCode == HTMLElements.FORM) {
             if (fOpenedForm) {
                 notifyDiscardedStartElement(elem, attrs, augs);
+                return;
+            }
+            if (!fSeenBodyElement && !isForcedCreation) {
+                startFormBeforeBody_ = new ElementEntry(elem, attrs, augs);
                 return;
             }
 
@@ -945,6 +980,10 @@ public class HTMLTagBalancer
             return;
         }
 
+        if (startFormBeforeBody_ != null && !text.isWhitespace()) {
+            consumeFormBeforeBody();
+        }
+
         if (fElementStack.top == 0 && !fDocumentFragment) {
             // character before first opening tag
             lostText_.add(text, augs);
@@ -999,6 +1038,8 @@ public class HTMLTagBalancer
             notifyDiscardedEndElement(element, augs);
             return;
         }
+
+        consumeFormBeforeBody();
 
         // get element information
         final HTMLElements.Element elem = getElement(element);
@@ -1406,10 +1447,16 @@ public class HTMLTagBalancer
      */
     static class ElementEntry {
         final QName name_;
+        final XMLAttributes attrs_;
         final Augmentations augs_;
 
         ElementEntry(final QName element, final Augmentations augs) {
+            this(element, null, augs);
+        }
+
+        ElementEntry(final QName element, final XMLAttributes attrs, final Augmentations augs) {
             name_ = new QName(element);
+            attrs_ = attrs;
             augs_ = augs == null ? null : augs.clone();
         }
     }
