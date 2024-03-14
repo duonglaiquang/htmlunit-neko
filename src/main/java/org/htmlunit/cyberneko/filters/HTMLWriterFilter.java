@@ -20,6 +20,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 import org.htmlunit.cyberneko.HTMLElements;
 import org.htmlunit.cyberneko.HTMLNamedEntitiesParser;
@@ -74,17 +75,12 @@ public class HTMLWriterFilter extends DefaultFilter {
     /** Normalize character content. */
     private boolean normalize_;
 
-    /** Print characters. */
-    private boolean printChars_;
-
     private final HTMLElements htmlElements_;
 
     /** Constructs a writer filter that prints to standard out. */
     public HTMLWriterFilter() {
-        // Note: UTF-8 should *always* be a supported encoding. Although,
-        //       I've heard of the old M$ JVM not supporting it! Amazing. -Ac
         try {
-            encoding_ = "UTF-8";
+            encoding_ = StandardCharsets.UTF_8.name();
             printer_ = new PrintWriter(new OutputStreamWriter(System.out, encoding_));
         }
         catch (final UnsupportedEncodingException e) {
@@ -133,7 +129,6 @@ public class HTMLWriterFilter extends DefaultFilter {
         seenRootElement_ = false;
         elementDepth_ = 0;
         normalize_ = true;
-        printChars_ = true;
         super.startDocument(locator, encoding, nscontext, augs);
     }
 
@@ -177,9 +172,7 @@ public class HTMLWriterFilter extends DefaultFilter {
     @Override
     public void characters(final XMLString text, final Augmentations augs)
         throws XNIException {
-        if (printChars_) {
-            printCharacters(text, normalize_);
-        }
+        printCharacters(text, normalize_);
         super.characters(text, augs);
     }
 
@@ -238,7 +231,6 @@ public class HTMLWriterFilter extends DefaultFilter {
 
     /** Print start element. */
     protected void printStartElement(final QName element, final XMLAttributes attributes) {
-
         // modify META[@http-equiv='content-type']/@content value
         int contentIndex = -1;
         String originalContent = null;
@@ -304,53 +296,19 @@ public class HTMLWriterFilter extends DefaultFilter {
         printer_.flush();
     }
 
-//    /** Main. */
-//    public static void main(String[] argv) throws Exception {
-//        if (argv.length == 0) {
-//            printUsage();
-//            System.exit(1);
-//        }
-//        XMLParserConfiguration parser = new HTMLConfiguration();
-//        String iencoding = null;
-//        String oencoding = "Windows-1252";
-//        for (int i = 0; i < argv.length; i++) {
-//            String arg = argv[i];
-//            if (arg.equals("-ie")) {
-//                iencoding = argv[++i];
-//                continue;
-//            }
-//            if (arg.equals("-e") || arg.equals("-oe")) {
-//                oencoding = argv[++i];
-//                continue;
-//            }
-//            if (arg.equals("-h")) {
-//                printUsage();
-//                System.exit(1);
-//            }
-//
-//            java.util.Vector filtersVector = new java.util.Vector(2);
-//            filtersVector.addElement(new HtmlWriterFilter(System.out, oencoding));
-//            XMLDocumentFilter[] filters =
-//                new XMLDocumentFilter[filtersVector.size()];
-//            filtersVector.copyInto(filters);
-//            parser.setProperty(HTMLConfiguration.FILTERS, filters);
-//            XMLInputSource source = new XMLInputSource(null, arg, null);
-//            source.setEncoding(iencoding);
-//            parser.parse(source);
-//        }
-//    }
-//
-//    /** Print usage. */
-//    private static void printUsage() {
-//        System.err.println("usage: java "+HtmlWriterFilter.class.getName()+" (options) file ...");
-//        System.err.println();
-//        System.err.println("options:");
-//        System.err.println("  -ie name  Specify IANA name of input encoding.");
-//        System.err.println("  -oe name  Specify IANA name of output encoding.");
-//        System.err.println("  -h        Display help screen.");
-//        System.err.println();
-//        System.err.println("notes:");
-//        System.err.println("  The -i and -p options are mutually exclusive.");
-//        System.err.println("  The -e option has been replaced with -oe.");
-//    }
+    protected void print(String content) {
+        printer_.print(content);
+    }
+
+    protected boolean hasSeenRootElement() {
+        return seenRootElement_;
+    };
+
+    protected int getElementDepth() {
+        return elementDepth_;
+    }
+
+    protected boolean getNormalize() {
+        return normalize_;
+    }
 }

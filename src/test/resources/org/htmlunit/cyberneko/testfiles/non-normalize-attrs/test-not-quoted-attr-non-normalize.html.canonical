@@ -1,0 +1,79 @@
+(HTML
+(head
+)head
+(BODY
+(div
+Aa abcd
+)div
+"\n
+(div
+Aa < / &lt;
+)div
+"\n
+(div
+Aa * / &#42;
+)div
+"\n
+(div
+Aa B / &#x42;
+)div
+"\n
+(div
+Aa BCDEF / &#x42;&#x43;&#x44;&#x45;&#x46;
+)div
+"\n
+(div
+Aa aB / a&#x42;
+)div
+"\n
+(div
+Aa B / &#x42;
+)div
+"\n
+(div
+Aa B / &#x42;
+)div
+"\n
+(div
+Aa 񂪼 / &#x42abc>
+)div
+"\n
+(div
+Aa B / &#x42 
+Aabc 
+)div
+"\n
+(div
+Aa Ü / &Uuml>
+)div
+"\n
+(div
+Aa &Uumlabc
+)div
+"\n
+(div
+Aa Ü / &Uuml 
+Aabc' 
+)div
+"\n
+(div
+Aa Ü / &Uuml;
+)div
+"\n
+(div
+Aa Üabc / &Uuml;abc
+)div
+"\n
+(div
+Aa &abc;abc
+)div
+"\n\n
+(div
+Aa 
+)div
+"\n
+(div
+Aa 
+)div
+)BODY
+)HTML
