@@ -464,12 +464,7 @@ import java.util.Locale;
  *
  * @author Ronald Brill
  */
-public final class EncodingMap implements EncodingTranslator {
-
-    /**
-     * Singleton.
-     */
-    public static final EncodingMap INSTANCE = new EncodingMap();
+public final class EncodingMap {
 
     /** fIANA2JavaMap */
     private static final HashMap<String, String> fIANA2JavaMap = new HashMap<>();
@@ -850,13 +845,12 @@ public final class EncodingMap implements EncodingTranslator {
      *
      * @param ianaEncoding The IANA encoding name.
      */
-    @Override
-    public String encodingNameFromLabel(final String charsetLabel) {
-        if (charsetLabel == null || charsetLabel.length() < 2) {
+    public static String getIANA2JavaMapping(final String ianaEncoding) {
+        if (ianaEncoding == null || ianaEncoding.length() < 2) {
             return null;
         }
 
-        String label = charsetLabel.trim().toUpperCase(Locale.ROOT);
-        return fIANA2JavaMap.get(label);
+        String encoding = ianaEncoding.trim().toUpperCase(Locale.ROOT);
+        return fIANA2JavaMap.get(encoding);
     }
 }
